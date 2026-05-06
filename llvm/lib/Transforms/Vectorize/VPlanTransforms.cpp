@@ -1849,12 +1849,8 @@ static void narrowToSingleScalarRecipes(VPlan &Plan) {
   if (Plan.hasScalarVFOnly())
     return;
 
-  // Try to narrow wide and replicating recipes to single scalar recipes,
-  // based on VPlan analysis. Only process blocks in the loop region for now,
-  // without traversing into nested regions, as recipes in replicate regions
-  // cannot be converted yet.
   for (VPBasicBlock *VPBB : VPBlockUtils::blocksOnly<VPBasicBlock>(
-           vp_depth_first_shallow(Plan.getVectorLoopRegion()->getEntry()))) {
+           vp_depth_first_deep(Plan.getEntry()))) {
     for (VPRecipeBase &R : make_early_inc_range(reverse(*VPBB))) {
       if (!isa<VPWidenRecipe, VPWidenGEPRecipe, VPReplicateRecipe>(&R))
         continue;
@@ -5333,6 +5329,16 @@ VPlanTransforms::narrowInterleaveGroups(VPlan &Plan,
     if (R.mayWriteToMemory() && !InterleaveR)
       return nullptr;
 
+    // Bail out if any recipe defines a vector value used outside the
+    // vector loop region.
+    if (any_of(R.definedValues(), [&](VPValue *V) {
+          return any_of(V->users(), [&](VPUser *U) {
+            auto *UR = cast<VPRecipeBase>(U);
+            return UR->getParent()->getParent() != VectorLoop;
+          });
+        }))
+      return nullptr;
+
     // All other ops are allowed, but we reject uses that cannot be converted
     // when checking all allowed consumers (store interleave groups) below.
     if (!InterleaveR)
@@ -6494,5 +6500,51 @@ void VPlanTransforms::makeMemOpWideningDecisions(
       Recipe = RecipeBuilder.handleReplication(VPI, Range);
 
     ReplaceWith(Recipe);
+  }
+}
+
+void VPlanTransforms::makeScalarizationDecisions(VPlan &Plan, VFRange &Range) {
+  if (LoopVectorizationPlanner::getDecisionAndClampRange(
+          [&](ElementCount VF) { return VF.isScalar(); }, Range))
+    return;
+
+  PostOrderTraversal<VPBlockDeepTraversalWrapper<VPBlockBase *>> POT(
+      Plan.getEntry());
+  for (VPBasicBlock *VPBB : VPBlockUtils::blocksOnly<VPBasicBlock>(POT)) {
+    for (VPRecipeBase &R : make_early_inc_range(reverse(*VPBB))) {
+      auto *VPI = dyn_cast<VPInstruction>(&R);
+      if (!VPI)
+        continue;
+
+      auto *I = cast_or_null<Instruction>(VPI->getUnderlyingValue());
+      // Wouldn't be able to create a `VPReplicateRecipe` anyway.
+      if (!I)
+        continue;
+
+      // If executing other lanes produces side-effects we can't avoid them.
+      if (VPI->mayHaveSideEffects())
+        continue;
+
+      // We want to drop the mask operand, verify we can safely do that.
+      if (VPI->isMasked() && !VPI->isSafeToSpeculativelyExecute())
+        continue;
+
+      // Avoid rewriting IV increment as that interferes with
+      // `removeRedundantCanonicalIVs`.
+      if (VPI->getOpcode() == Instruction::Add &&
+          any_of(VPI->operands(), IsaPred<VPWidenIntOrFpInductionRecipe>))
+        continue;
+
+      // Other lanes are needed - can't drop them.
+      if (!vputils::onlyFirstLaneUsed(VPI))
+        continue;
+
+      auto *Recipe = new VPReplicateRecipe(
+          I, VPI->operandsWithoutMask(), /*IsSingleScalar=*/true,
+          /*Mask=*/nullptr, *VPI, *VPI, VPI->getDebugLoc());
+      Recipe->insertBefore(VPI);
+      VPI->replaceAllUsesWith(Recipe);
+      VPI->eraseFromParent();
+    }
   }
 }
