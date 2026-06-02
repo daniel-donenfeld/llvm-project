@@ -32,8 +32,8 @@ define internal i32 @foo() {
 ; CHECK-NEXT:    add.u64 %rd3, %SPL, 1;
 ; CHECK-NEXT:    ld.local.b8 %rs1, [%rd3];
 ; CHECK-NEXT:    st.param.b8 [param0], %rs1;
-; CHECK-NEXT:    prototype_0 : .callprototype (.param .b32 _) _ (.param .align 1 .b8 _[1], .param .b64 _);
-; CHECK-NEXT:    call (retval0), %rd1, (param0, param1), prototype_0;
+; CHECK-NEXT:    $L__prototype_0 : .callprototype (.param .b32 _) _ (.param .align 1 .b8 _[1], .param .b64 _);
+; CHECK-NEXT:    call (retval0), %rd1, (param0, param1), $L__prototype_0;
 ; CHECK-NEXT:    ld.param.b32 %r1, [retval0];
 ; CHECK-NEXT:    } // callseq 0
 ; CHECK-NEXT:    st.param.b32 [func_retval0], %r1;
@@ -69,8 +69,8 @@ define internal i32 @bar() {
 ; CHECK-NEXT:    add.u64 %rd3, %SPL, 8;
 ; CHECK-NEXT:    ld.local.b64 %rd4, [%rd3];
 ; CHECK-NEXT:    st.param.b64 [param0], %rd4;
-; CHECK-NEXT:    prototype_1 : .callprototype (.param .b32 _) _ (.param .align 8 .b8 _[8], .param .b64 _);
-; CHECK-NEXT:    call (retval0), %rd1, (param0, param1), prototype_1;
+; CHECK-NEXT:    $L__prototype_1 : .callprototype (.param .b32 _) _ (.param .align 8 .b8 _[8], .param .b64 _);
+; CHECK-NEXT:    call (retval0), %rd1, (param0, param1), $L__prototype_1;
 ; CHECK-NEXT:    ld.param.b32 %r1, [retval0];
 ; CHECK-NEXT:    } // callseq 1
 ; CHECK-NEXT:    st.param.b32 [func_retval0], %r1;

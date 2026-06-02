@@ -130,9 +130,9 @@ define ptx_kernel void @grid_const_escape(ptr byval(%struct.s) align 4 "nvvm.gri
 ; PTX-NEXT:    .param .b64 param0;
 ; PTX-NEXT:    .param .b32 retval0;
 ; PTX-NEXT:    st.param.b64 [param0], %rd2;
-; PTX-NEXT:    prototype_0 : .callprototype (.param .b32 _) _ (.param .b64 _);
+; PTX-NEXT:    $L__prototype_0 : .callprototype (.param .b32 _) _ (.param .b64 _);
 ; PTX-NEXT:    mov.b64 %rd3, escape;
-; PTX-NEXT:    call (retval0), %rd3, (param0), prototype_0;
+; PTX-NEXT:    call (retval0), %rd3, (param0), $L__prototype_0;
 ; PTX-NEXT:    } // callseq 0
 ; PTX-NEXT:    ret;
 ; OPT-LABEL: define ptx_kernel void @grid_const_escape(
@@ -173,9 +173,9 @@ define ptx_kernel void @multiple_grid_const_escape(ptr byval(%struct.s) align 4 
 ; PTX-NEXT:    st.param.b64 [param2], %rd3;
 ; PTX-NEXT:    st.param.b64 [param1], %rd5;
 ; PTX-NEXT:    st.param.b64 [param0], %rd4;
-; PTX-NEXT:    prototype_1 : .callprototype (.param .b32 _) _ (.param .b64 _, .param .b64 _, .param .b64 _);
+; PTX-NEXT:    $L__prototype_1 : .callprototype (.param .b32 _) _ (.param .b64 _, .param .b64 _, .param .b64 _);
 ; PTX-NEXT:    mov.b64 %rd7, escape3;
-; PTX-NEXT:    call (retval0), %rd7, (param0, param1, param2), prototype_1;
+; PTX-NEXT:    call (retval0), %rd7, (param0, param1, param2), $L__prototype_1;
 ; PTX-NEXT:    } // callseq 1
 ; PTX-NEXT:    ret;
 ; OPT-LABEL: define ptx_kernel void @multiple_grid_const_escape(
@@ -267,9 +267,9 @@ define ptx_kernel void @grid_const_partial_escape(ptr byval(i32) align 4 "nvvm.g
 ; PTX-NEXT:    .param .b64 param0;
 ; PTX-NEXT:    .param .b32 retval0;
 ; PTX-NEXT:    st.param.b64 [param0], %rd4;
-; PTX-NEXT:    prototype_2 : .callprototype (.param .b32 _) _ (.param .b64 _);
+; PTX-NEXT:    $L__prototype_2 : .callprototype (.param .b32 _) _ (.param .b64 _);
 ; PTX-NEXT:    mov.b64 %rd5, escape;
-; PTX-NEXT:    call (retval0), %rd5, (param0), prototype_2;
+; PTX-NEXT:    call (retval0), %rd5, (param0), $L__prototype_2;
 ; PTX-NEXT:    } // callseq 2
 ; PTX-NEXT:    ret;
 ; OPT-LABEL: define ptx_kernel void @grid_const_partial_escape(
@@ -307,9 +307,9 @@ define ptx_kernel i32 @grid_const_partial_escapemem(ptr byval(%struct.s) align 4
 ; PTX-NEXT:    .param .b64 param0;
 ; PTX-NEXT:    .param .b32 retval0;
 ; PTX-NEXT:    st.param.b64 [param0], %rd4;
-; PTX-NEXT:    prototype_3 : .callprototype (.param .b32 _) _ (.param .b64 _);
+; PTX-NEXT:    $L__prototype_3 : .callprototype (.param .b32 _) _ (.param .b64 _);
 ; PTX-NEXT:    mov.b64 %rd5, escape;
-; PTX-NEXT:    call (retval0), %rd5, (param0), prototype_3;
+; PTX-NEXT:    call (retval0), %rd5, (param0), $L__prototype_3;
 ; PTX-NEXT:    } // callseq 3
 ; PTX-NEXT:    st.param.b32 [func_retval0], %r3;
 ; PTX-NEXT:    ret;

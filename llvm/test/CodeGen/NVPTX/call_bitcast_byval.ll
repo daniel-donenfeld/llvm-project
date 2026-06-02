@@ -17,7 +17,7 @@ target triple = "nvptx64-nvidia-cuda"
 ; CHECK: .param .align 2 .b8 retval0[4];
 ; CHECK-DAG: st.param.b16   [param2], %rs{{[0-9]+}};
 ; CHECK-DAG: st.param.b16   [param2+2], %rs{{[0-9]+}};
-; CHECK: prototype_0 : .callprototype (.param .align 2 .b8 _[4]) _ (.param .b32 _, .param .b32 _, .param .align 2 .b8 _[4]);
+; CHECK: $L__prototype_0 : .callprototype (.param .align 2 .b8 _[4]) _ (.param .b32 _, .param .b32 _, .param .align 2 .b8 _[4]);
 ; CHECK: call (retval0),
 define weak_odr void @foo() {
 entry:

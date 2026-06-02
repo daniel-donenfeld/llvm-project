@@ -1205,7 +1205,7 @@ std::string NVPTXTargetLowering::getPrototype(
 
   std::string Prototype;
   raw_string_ostream O(Prototype);
-  O << "prototype_" << UniqueCallSite << " : .callprototype ";
+  O << "$L__prototype_" << UniqueCallSite << " : .callprototype ";
 
   if (RetTy->isVoidTy()) {
     O << "()";
