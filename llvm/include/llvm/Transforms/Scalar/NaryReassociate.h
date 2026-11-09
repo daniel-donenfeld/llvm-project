@@ -142,6 +142,14 @@ private:
   // passed.
   Instruction *tryReassociateBinaryOp(Value *LHS, Value *RHS,
                                       BinaryOperator *I);
+  // Rewrites I = (A + B) * RHS to (A * RHS) + (B * RHS) if both products are
+  // computed already.
+  Instruction *tryDistributeMul(Value *LHS, Value *RHS, BinaryOperator *I);
+
+  // Rewrites I = (X << C1) + C2 to (X + C3) << C1 if X + C3 is computed
+  // already, where C2 = C3 << C1.
+  Instruction *tryReassociateShlAdd(Value *LHS, Value *RHS, BinaryOperator *I);
+
   // Rewrites I to (LHS op RHS) if LHS is computed already.
   Instruction *tryReassociatedBinaryOp(SCEVUse LHS, Value *RHS,
                                        BinaryOperator *I);

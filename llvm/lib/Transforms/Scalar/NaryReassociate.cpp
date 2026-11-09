@@ -448,10 +448,12 @@ Instruction *NaryReassociatePass::tryReassociateBinaryOp(BinaryOperator *I) {
 
 Instruction *NaryReassociatePass::tryReassociateBinaryOp(Value *LHS, Value *RHS,
                                                          BinaryOperator *I) {
+  // To be conservative, we reassociate I only when it is the only user of LHS.
+  if (!LHS->hasOneUse())
+    return nullptr;
+
   Value *A = nullptr, *B = nullptr;
-  // To be conservative, we reassociate I only when it is the only user of (A op
-  // B).
-  if (LHS->hasOneUse() && matchTernaryOp(I, LHS, A, B)) {
+  if (matchTernaryOp(I, LHS, A, B)) {
     // I = (A op B) op RHS
     //   = (A op RHS) op B or (B op RHS) op A
     SCEVUse AExpr = SE->getSCEV(A), BExpr = SE->getSCEV(B);
@@ -467,7 +469,50 @@ Instruction *NaryReassociatePass::tryReassociateBinaryOp(Value *LHS, Value *RHS,
         return NewI;
     }
   }
-  return nullptr;
+  if (auto *NewI = tryDistributeMul(LHS, RHS, I))
+    return NewI;
+  return tryReassociateShlAdd(LHS, RHS, I);
+}
+
+Instruction *NaryReassociatePass::tryDistributeMul(Value *LHS, Value *RHS,
+                                                   BinaryOperator *I) {
+  Value *A = nullptr, *B = nullptr;
+  if (I->getOpcode() != Instruction::Mul ||
+      !match(LHS, m_Add(m_Value(A), m_Value(B))))
+    return nullptr;
+  SCEVUse RHSExpr = SE->getSCEV(RHS);
+  auto *AMul =
+      findClosestMatchingDominator(SE->getMulExpr(SE->getSCEV(A), RHSExpr), I);
+  if (!AMul)
+    return nullptr;
+  auto *BMul =
+      findClosestMatchingDominator(SE->getMulExpr(SE->getSCEV(B), RHSExpr), I);
+  if (!BMul)
+    return nullptr;
+  auto *NewI = BinaryOperator::CreateAdd(AMul, BMul, "", I->getIterator());
+  NewI->setDebugLoc(I->getDebugLoc());
+  NewI->takeName(I);
+  return NewI;
+}
+
+Instruction *NaryReassociatePass::tryReassociateShlAdd(Value *LHS, Value *RHS,
+                                                       BinaryOperator *I) {
+  Value *X = nullptr;
+  const APInt *C1 = nullptr, *C2 = nullptr;
+  if (I->getOpcode() != Instruction::Add ||
+      !match(LHS, m_Shl(m_Value(X), m_APInt(C1))) || !match(RHS, m_APInt(C2)) ||
+      !C1->ult(C1->getBitWidth()) || C2->countr_zero() < C1->getZExtValue())
+    return nullptr;
+  auto *C3 = ConstantInt::get(I->getType(), C2->lshr(*C1));
+  auto *Sum = findClosestMatchingDominator(
+      SE->getAddExpr(SE->getSCEV(X), SE->getSCEV(C3)), I);
+  if (!Sum)
+    return nullptr;
+  auto *NewI = BinaryOperator::CreateShl(
+      Sum, ConstantInt::get(I->getType(), *C1), "", I->getIterator());
+  NewI->setDebugLoc(I->getDebugLoc());
+  NewI->takeName(I);
+  return NewI;
 }
 
 Instruction *NaryReassociatePass::tryReassociatedBinaryOp(SCEVUse LHSExpr,

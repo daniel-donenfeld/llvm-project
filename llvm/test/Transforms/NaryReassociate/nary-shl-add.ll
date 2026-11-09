@@ -9,8 +9,7 @@ define i32 @shl_add(i32 %x) {
 ; CHECK-SAME: i32 [[X:%.*]]) {
 ; CHECK-NEXT:    [[P:%.*]] = add i32 [[X]], 787
 ; CHECK-NEXT:    call void @use(i32 [[P]])
-; CHECK-NEXT:    [[S:%.*]] = shl i32 [[X]], 22
-; CHECK-NEXT:    [[R:%.*]] = add i32 [[S]], -994050048
+; CHECK-NEXT:    [[R:%.*]] = shl i32 [[P]], 22
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %p = add i32 %x, 787
@@ -25,8 +24,7 @@ define i64 @shl_add_i64(i64 %x) {
 ; CHECK-SAME: i64 [[X:%.*]]) {
 ; CHECK-NEXT:    [[P:%.*]] = add i64 [[X]], 5
 ; CHECK-NEXT:    call void @use64(i64 [[P]])
-; CHECK-NEXT:    [[S:%.*]] = shl i64 [[X]], 4
-; CHECK-NEXT:    [[R:%.*]] = add i64 [[S]], 80
+; CHECK-NEXT:    [[R:%.*]] = shl i64 [[P]], 4
 ; CHECK-NEXT:    ret i64 [[R]]
 ;
   %p = add i64 %x, 5
@@ -41,8 +39,7 @@ define i32 @shl_add_neg(i32 %x) {
 ; CHECK-SAME: i32 [[X:%.*]]) {
 ; CHECK-NEXT:    [[P:%.*]] = add i32 [[X]], 536870910
 ; CHECK-NEXT:    call void @use(i32 [[P]])
-; CHECK-NEXT:    [[S:%.*]] = shl i32 [[X]], 3
-; CHECK-NEXT:    [[R:%.*]] = add i32 [[S]], -16
+; CHECK-NEXT:    [[R:%.*]] = shl i32 [[P]], 3
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %p = add i32 %x, 536870910
@@ -135,8 +132,7 @@ define i32 @shl_add_debugloc(i32 %x) !dbg !5 {
 ; CHECK-SAME: i32 [[X:%.*]]) !dbg [[DBG3:![0-9]+]] {
 ; CHECK-NEXT:    [[P:%.*]] = add i32 [[X]], 2
 ; CHECK-NEXT:    call void @use(i32 [[P]])
-; CHECK-NEXT:    [[S:%.*]] = shl i32 [[X]], 3
-; CHECK-NEXT:    [[R:%.*]] = add i32 [[S]], 16, !dbg [[DBG6:![0-9]+]]
+; CHECK-NEXT:    [[R:%.*]] = shl i32 [[P]], 3, !dbg [[DBG6:![0-9]+]]
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %p = add i32 %x, 2
